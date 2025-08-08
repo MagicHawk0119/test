@@ -17,3 +17,6 @@ if __name__ == '__main__':
 
 # A feature I have added
 print('Bye')
+
+# Another feature
+print('Program is shutting down')
