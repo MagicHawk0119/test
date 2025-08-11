@@ -1,0 +1,54 @@
+# .github/workflows/windows-release.yml
+name: Windows Release Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      # 1. Check out the repo (including tags)
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # 2. Set up Python
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # 3. Install PyInstaller
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      # 4. Build main.py into a single console-less exe in Fragment/
+      - name: Build executable
+        working-directory: Fragment
+        run: |
+          pyinstaller --noconsole --onefile --distpath . main.py
+
+      # 5. Remove the build directory and the .spec file
+      - name: Clean up build files
+        working-directory: Fragment
+        run: |
+          Remove-Item -Recurse -Force build
+          Remove-Item -Force main.spec
+
+      # 6. Zip up the entire Fragment folder
+      - name: Create ZIP archive
+        run: |
+          Compress-Archive -Path Fragment\* -DestinationPath fragment.zip
+
+      # 7. Upload the ZIP to the GitHub Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./fragment.zip
+          asset_name: fragment.zip
+          asset_content_type: application/zip
